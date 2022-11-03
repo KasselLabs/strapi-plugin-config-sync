@@ -22,9 +22,9 @@ module.exports = {
     const shouldExclude = strapi.plugins['config-sync'].config.exclude.includes(`${configType}.${configName}`);
     if (shouldExclude) return;
 
-    // Check if the JSON content should be minified. 
-    const json = 
-      !strapi.plugins['config-sync'].config.minify ? 
+    // Check if the JSON content should be minified.
+    const json =
+      !strapi.plugins['config-sync'].config.minify ?
         JSON.stringify(fileContents, null, 2)
         : JSON.stringify(fileContents);
 
@@ -33,6 +33,7 @@ module.exports = {
     }
 
     const writeFile = util.promisify(fs.writeFile);
+    configName = configName.replace(/:/g, '#')
     await writeFile(`${strapi.plugins['config-sync'].config.destination}${configType}.${configName}.json`, json)
       .then(() => {
         // @TODO:
@@ -55,6 +56,7 @@ module.exports = {
     const shouldExclude = strapi.plugins['config-sync'].config.exclude.includes(`${configName}`);
     if (shouldExclude) return;
 
+    configName = configName.replace(/:/g, '#')
     fs.unlinkSync(`${strapi.plugins['config-sync'].config.destination}${configName}.json`);
   },
 
@@ -67,6 +69,7 @@ module.exports = {
    */
   readConfigFile: async (configType, configName) => {
     const readFile = util.promisify(fs.readFile);
+    configName = configName.replace(/:/g, '#')
     return await readFile(`${strapi.plugins['config-sync'].config.destination}${configType}.${configName}.json`)
       .then((data) => {
         return JSON.parse(data);
@@ -94,7 +97,7 @@ module.exports = {
 
       await Promise.all(configFiles.map(async (file) => {
         const type = file.split('.')[0]; // Grab the first part of the filename.
-        const name = file.split(/\.(.+)/)[1].split('.').slice(0, -1).join('.'); // Grab the rest of the filename minus the file extension.
+        const name = file.split(/\.(.+)/)[1].split('.').slice(0, -1).join('.').replace(/#/g, ':'); // Grab the rest of the filename minus the file extension.
 
         if (
           configType && configType !== type ||
